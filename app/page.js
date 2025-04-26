@@ -18,6 +18,8 @@ export default async function Home() {
               alt={movie.title}
               width={300}
               height={450}
+              placeholder="blur"
+              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQI12P4/w8AAgUBAc1kpJoAAAAASUVORK5CYII="
               className="w-full h-80 object-cover"
             />
           )}
