@@ -29,7 +29,17 @@ export default function Home() {
     try {
       const data = await fetchPopularMovies(currentPage);
 
-      setMovies((prev) => [...prev, ...data.results]);
+      //setMovies((prev) => [...prev, ...data.results]);
+      setMovies((prev) => {
+        const movieMap = new Map();
+        
+        [...prev, ...data.results].forEach((movie) => {
+          movieMap.set(movie.id, movie); // ✅ overwrite duplicates
+        });
+        
+        return Array.from(movieMap.values());
+      });
+      
       setTotalPages(data.total_pages);
       setCurrentPage((prev) => prev + 1);
     } catch (err) {
