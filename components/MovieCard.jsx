@@ -7,7 +7,7 @@ export default function MovieCard({ movie }) {
 
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-md transform transition duration-300 hover:scale-105 hover:z-10">
-      <div className="relative w-full pb-[150%]">
+      <div className="relative w-full aspect-[2/3]">
       <Image
           src={`${imageBaseUrl}${movie.poster_path}`}
           alt={movie.title}
