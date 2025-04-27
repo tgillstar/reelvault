@@ -6,9 +6,11 @@ import { MovieCard } from '@/components';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(null);
   const [loading, setLoading] = useState(false);
   const loader = useRef(null);
+  const [error, setError] = useState(null);
 
   /**
    * Sets up the function to fetch movies dynamically.
@@ -17,16 +19,25 @@ export default function Home() {
    * It also shows "loading" state when fetching.
    */
   const loadMovies = useCallback(async () => {
-    setLoading(true);
+    if (totalPages && currentPage > totalPages) {
+      console.log("All pages loaded, stopping fetch.");
+      setLoading(false);
+      return;
+    }
+  
     try {
-      const data = await fetchPopularMovies(page);
-      setMovies((prev) => [...prev, ...data]);
-    } catch (error) {
-      console.error(error);
+      const data = await fetchPopularMovies(currentPage);
+
+      setMovies((prev) => [...prev, ...data.results]);
+      setTotalPages(data.total_pages);
+      setCurrentPage((prev) => prev + 1);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load movies. Please try again later.");
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [currentPage, totalPages]);  
 
   // Trigger loadMovies() when page changes
   useEffect(() => {
@@ -44,7 +55,7 @@ export default function Home() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading) {
-          setPage((prev) => prev + 1);
+          loadMovies();
         }
       },
       { threshold: 1 }
@@ -63,6 +74,13 @@ export default function Home() {
 
   return (
     <main className="w-full flex flex-col items-center gap-6 p-8 bg-gray-900 min-h-screen">
+
+      {error && (
+        <div className="text-red-500 text-center">
+          {error}
+        </div>
+      )}
+
       <div className="w-full px-6">
         <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
           {movies.map((movie) => (
