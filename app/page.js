@@ -1,5 +1,5 @@
 import { fetchPopularMovies } from '@/lib/tmdb';
-import MovieCard from '@/components/MovieCard';
+import { MovieCard } from '@/components';
 
 export default async function Home() {
   const movies = await fetchPopularMovies();
