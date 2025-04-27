@@ -2,11 +2,14 @@
 
 import Image from 'next/image';
 
-export default function MovieCard({ movie }) {
+export default function MovieCard({ movie, handleClick }) {
   const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-md transform transition duration-300 hover:scale-105 hover:z-10">
+    <div 
+      onClick={() => handleClick(movie)} 
+      className="bg-gray-800 rounded-lg overflow-hidden shadow-md transform transition duration-300 hover:scale-105 hover:z-10"
+    >
       <div className="relative w-full aspect-[2/3]">
       <Image
           src={`${imageBaseUrl}${movie.poster_path}`}

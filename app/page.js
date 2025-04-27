@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchPopularMovies } from '@/lib/tmdb';
-import { MovieCard } from '@/components';
+import { MovieCard, MovieModal } from '@/components';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
+  const [selectedMovie, setSelectedMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -84,14 +85,20 @@ export default function Home() {
       <div className="w-full px-6">
         <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
           {movies.map((movie) => (
-            <MovieCard key={movie.id + Math.random()} movie={movie} />
+            <MovieCard key={movie.id} movie={movie} handleClick={setSelectedMovie} />
           ))}
         </div>
       </div>
+
        {/* Sentinel div that triggers infinite scroll */}
       <div ref={loader} className="h-10" />
 
       {loading && <p className="text-white">Loading more movies...</p>}
+
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      )}
+
     </main>
   );
 }
