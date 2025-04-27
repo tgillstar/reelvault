@@ -62,8 +62,8 @@ export default function Home() {
   }, [loading]);
 
   return (
-    <main className="flex flex-col items-center gap-6 p-8 bg-gray-900 min-h-screen">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <main className="flex flex-col items-center w-full max-w-screen-2xl mx-auto gap-6 p-8 bg-gray-900 min-h-screen">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {movies.map((movie) => (
           <MovieCard key={movie.id + Math.random()} movie={movie} />
         ))}
