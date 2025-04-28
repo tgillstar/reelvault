@@ -28,18 +28,23 @@ export default function Home() {
   
     try {
       const data = await fetchPopularMovies(currentPage);
-
-      //setMovies((prev) => [...prev, ...data.results]);
+  
+      // ✅ Filter movies with a valid image
+      const filteredMovies = data.results.filter(
+        (movie) => movie.backdrop_path || movie.poster_path
+      );
+  
+      // ✅ Deduplicate while merging previous movies + new filtered movies
       setMovies((prev) => {
         const movieMap = new Map();
         
-        [...prev, ...data.results].forEach((movie) => {
-          movieMap.set(movie.id, movie); // ✅ overwrite duplicates
+        [...prev, ...filteredMovies].forEach((movie) => {
+          movieMap.set(movie.id, movie); // overwrite duplicates based on ID
         });
-        
+  
         return Array.from(movieMap.values());
       });
-      
+  
       setTotalPages(data.total_pages);
       setCurrentPage((prev) => prev + 1);
     } catch (err) {
@@ -48,12 +53,12 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, totalPages]);  
-
-  // Trigger loadMovies() when page changes
+  }, [currentPage, totalPages]);
+  
+  // Keep your useEffect exactly the same:
   useEffect(() => {
     loadMovies();
-  }, [loadMovies]);
+  }, [loadMovies]);  
 
   /** 
    * Using IntersectionObserver to trigger page increments for the 
@@ -84,7 +89,7 @@ export default function Home() {
   }, [loading]);
 
   return (
-    <main className="w-full flex flex-col items-center gap-6 p-8 bg-gray-900 min-h-screen">
+    <main className="w-full flex flex-col items-center gap-6 bg-gray-900 min-h-screen">
 
       {error && (
         <div className="text-red-500 text-center">
