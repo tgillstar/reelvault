@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchPopularMovies } from '@/lib/tmdb';
-import { HeroBanner, MovieCard, MovieModal } from '@/components';
+import { HeroBanner, MovieCard, MovieModal, MovieGenres } from '@/components';
 
 export default function Home() {
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [movies, setMovies] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(null);
@@ -28,14 +29,22 @@ export default function Home() {
     }
   
     try {
-      const data = await fetchPopularMovies(currentPage);
+
+      // Filter movies by select genre
+      const url = selectedGenre
+        ? `https://api.themoviedb.org/3/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&with_genres=${selectedGenre}&page=${currentPage}`
+        : `https://api.themoviedb.org/3/movie/popular?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
   
-      // ✅ Filter movies with a valid image
+      // Filter movies with a valid image
       const filteredMovies = data.results.filter(
         (movie) => movie.backdrop_path || movie.poster_path
       );
   
-      // ✅ Deduplicate while merging previous movies + new filtered movies
+      // Deduplicate while merging previous movies + new filtered movies
       setMovies((prev) => {
         const movieMap = new Map();
         
@@ -56,10 +65,17 @@ export default function Home() {
     }
   }, [currentPage, totalPages]);
   
-  // Keep your useEffect exactly the same:
+  // Use these effects to trigger movie loading and movie genre selection.
   useEffect(() => {
     loadMovies();
   }, [loadMovies]);  
+
+  useEffect(() => {
+    setMovies([]);
+    setCurrentPage(1);
+    setTotalPages(null);
+  }, [selectedGenre]);
+  
 
   /** 
    * Using IntersectionObserver to trigger page increments for the 
@@ -99,7 +115,6 @@ export default function Home() {
       setFeaturedMovie(movies[randomIndex]);
     }
   }, [movies, featuredMovie]);
-  
 
   return (
     <main className="w-full flex flex-col items-center gap-6 bg-gray-900 min-h-screen">
@@ -116,6 +131,9 @@ export default function Home() {
           {error}
         </div>
       )}
+
+      {/* Movie Genre selection */}
+      <MovieGenres onGenreSelect={setSelectedGenre} />
 
       {/* Movie Grid */}
       <div className="w-full px-6">
