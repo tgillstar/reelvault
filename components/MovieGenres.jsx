@@ -57,37 +57,57 @@ export default function MovieGenres({ selectedGenres, onGenreToggle }) {
     }
   };
 
+  const clearFilters = () => {
+    onGenreToggle([]);
+  };  
+
   return (
     <div className="w-full px-6 mb-4">
       {isMobile ? (
-        <select
-          value={selectedGenres.length === 1 ? selectedGenres[0] : -1}
-          onChange={handleDropdownChange}
-          className="w-full p-2 rounded bg-gray-800 text-white"
-        >
-          <option value={-1}>All Genres</option>
-          {genres.map((genre) => (
-            <option key={genre.id} value={genre.id ?? ''}>
-              {genre.name}
-            </option>
-          ))}
-        </select>
+         <>
+          <select
+            value={selectedGenres.length === 1 ? selectedGenres[0] : -1}
+            onChange={handleDropdownChange}
+            className="w-full p-2 rounded bg-gray-800 text-white"
+          >
+            <option value={-1}>All Genres</option>
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.id ?? ''}>
+                {genre.name}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={clearFilters}
+            className="self-start mt-2 text-sm text-red-500 underline"
+          >
+            Clear Filters
+          </button>
+        </>
       ) : (
-        <ul className="flex gap-3 overflow-x-auto whitespace-nowrap pb-2">
-          {genres.map((genre) => (
-            <li
-              key={genre.id}
-              onClick={() => handleGenreClick(genre.id)}
-              className={`px-4 py-2 rounded-full cursor-pointer text-sm border ${
-                (genre.id === null && selectedGenres.length === 0) || selectedGenres.includes(genre.id)
-                  ? 'bg-red-600 text-white border-red-600'
-                  : 'bg-gray-200 text-black border-gray-400 hover:bg-gray-300'
-              }`}
-            >
-              {genre.name}
-            </li>
-          ))}
+        <div className="flex flex-col gap-2">
+          <ul className="flex gap-3 overflow-x-auto whitespace-nowrap pb-2">
+            {genres.map((genre) => (
+              <li
+                key={genre.id}
+                onClick={() => handleGenreClick(genre.id)}
+                className={`px-4 py-2 rounded-full cursor-pointer text-sm border ${
+                  (genre.id === null && selectedGenres.length === 0) || selectedGenres.includes(genre.id)
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-gray-200 text-black border-gray-400 hover:bg-gray-300'
+                }`}
+              >
+                {genre.name}
+              </li>
+            ))}
         </ul>
+        <button
+          onClick={clearFilters}
+          className="self-start text-sm text-red-500 underline"
+        >
+          Clear Filters
+        </button>
+        </div>
       )}
     </div>
   );

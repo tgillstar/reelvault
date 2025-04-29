@@ -11,7 +11,7 @@ export default function HeroBanner({ movie }) {
   if (!backdrop) return null; // Don't even render HeroBanner without backdrop
 
   return (
-    <div className="relative w-full aspect-[16/9] h-[60vh] md:h-[70vh] lg:h-[80vh] overflow-hidden ">
+    <div className="relative w-full aspect-[16/9] h-[40vh] md:h-[50vh] lg:h-[60vh] overflow-hidden ">
       <Image
         rel="preload" 
         src={`${imageBaseUrl}${movie.backdrop_path || movie.poster_path}`}
