@@ -8,7 +8,7 @@ import { HeroBanner, MovieCard, MovieModal, MovieGenres } from '@/components';
 export default function Home() {
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [movies, setMovies] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState(null);
+  const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(null);
@@ -31,10 +31,16 @@ export default function Home() {
   
     try {
 
+      setLoading(true);
+
       // Filter movies by select genre
-      const url = selectedGenre
-        ? `https://api.themoviedb.org/3/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&with_genres=${selectedGenre}&page=${currentPage}`
-        : `https://api.themoviedb.org/3/movie/popular?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}`;
+      const genreQuery = selectedGenres.length > 0
+        ? `&with_genres=${selectedGenres.join(',')}`
+        : '';
+
+      const url = `https://api.themoviedb.org/3/${
+        selectedGenres.length > 0 ? 'discover/movie' : 'movie/popular'
+      }?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}${genreQuery}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -75,7 +81,7 @@ export default function Home() {
     setMovies([]);
     setCurrentPage(1);
     setTotalPages(null);
-  }, [selectedGenre]);
+  }, [selectedGenres]);
   
 
   /** 
@@ -133,8 +139,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Movie Genre selection */}
-      <MovieGenres onGenreSelect={setSelectedGenre} />
+      {/* Movie Genre(s) selection */}
+      <MovieGenres selectedGenres={selectedGenres} onGenreToggle={setSelectedGenres} />
 
       {/* Movie Grid */}
       <div className="w-full px-6">

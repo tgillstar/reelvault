@@ -3,9 +3,8 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 
-export default function MovieGenres({ onGenreSelect }) {
+export default function MovieGenres({ selectedGenres, onGenreToggle }) {
   const [genres, setGenres] = useState([]);
-  const [selectedGenreId, setSelectedGenreId] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -37,19 +36,36 @@ export default function MovieGenres({ onGenreSelect }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleChange = (genreId) => {
-    setSelectedGenreId(genreId);
-    onGenreSelect(genreId);
+  const handleGenreClick = (genreId) => {
+    if (genreId === null) {
+      onGenreToggle([]); // Clear all genres if 'All' clicked
+    } else {
+      if (selectedGenres.includes(genreId)) {
+        onGenreToggle(selectedGenres.filter((id) => id !== genreId)); // Remove genre
+      } else {
+        onGenreToggle([...selectedGenres, genreId]); // Add genre
+      }
+    }
+  };
+
+  const handleDropdownChange = (e) => {
+    const selectedId = parseInt(e.target.value);
+    if (selectedId === -1) {
+      onGenreToggle([]);
+    } else {
+      onGenreToggle([selectedId]); // In mobile, treat it as single selection
+    }
   };
 
   return (
     <div className="w-full px-6 mb-4">
       {isMobile ? (
         <select
-          value={selectedGenreId ?? ''}
-          onChange={(e) => handleChange(e.target.value || null)}
+          value={selectedGenres.length === 1 ? selectedGenres[0] : -1}
+          onChange={handleDropdownChange}
           className="w-full p-2 rounded bg-gray-800 text-white"
         >
+          <option value={-1}>All Genres</option>
           {genres.map((genre) => (
             <option key={genre.id} value={genre.id ?? ''}>
               {genre.name}
@@ -61,9 +77,9 @@ export default function MovieGenres({ onGenreSelect }) {
           {genres.map((genre) => (
             <li
               key={genre.id}
-              onClick={() => handleChange(genre.id)}
+              onClick={() => handleGenreClick(genre.id)}
               className={`px-4 py-2 rounded-full cursor-pointer text-sm border ${
-                selectedGenreId === genre.id
+                (genre.id === null && selectedGenres.length === 0) || selectedGenres.includes(genre.id)
                   ? 'bg-red-600 text-white border-red-600'
                   : 'bg-gray-200 text-black border-gray-400 hover:bg-gray-300'
               }`}
