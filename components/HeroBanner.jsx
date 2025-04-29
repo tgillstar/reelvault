@@ -11,7 +11,7 @@ export default function HeroBanner({ movie }) {
   if (!backdrop) return null; // Don't even render HeroBanner without backdrop
 
   return (
-    <div className="relative w-full aspect-[16/9] h-[40vh] md:h-[50vh] lg:h-[60vh] overflow-hidden ">
+    <div className="relative w-full aspect-[16/9] h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] xl:h-[70vh] overflow-hidden">
       <Image
         rel="preload" 
         src={`${imageBaseUrl}${movie.backdrop_path || movie.poster_path}`}
@@ -26,7 +26,9 @@ export default function HeroBanner({ movie }) {
 
       {/* Title */}
       <div className="absolute bottom-8 left-8 z-10">
-        <h1 className="text-white text-5xl md:text-6xl font-bold">ReelVault</h1>
+      <h1 className="text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold">
+        ReelVault
+      </h1>
       </div>
     </div>
   );

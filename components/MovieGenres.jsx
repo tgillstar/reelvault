@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react'; // Lightweight React icon set
 
 export default function MovieGenres({ selectedGenres, onGenreToggle }) {
   const [genres, setGenres] = useState([]);
@@ -66,11 +67,14 @@ export default function MovieGenres({ selectedGenres, onGenreToggle }) {
       {isMobile ? (
          <>
           <select
-            value={selectedGenres.length === 1 ? selectedGenres[0] : -1}
-            onChange={handleDropdownChange}
+            multiple
+            value={selectedGenres}
+            onChange={(e) => {
+              const selectedOptions = Array.from(e.target.selectedOptions, (option) => parseInt(option.value));
+              onGenreToggle(selectedOptions);
+            }}
             className="w-full p-2 rounded bg-gray-800 text-white"
           >
-            <option value={-1}>All Genres</option>
             {genres.map((genre) => (
               <option key={genre.id} value={genre.id ?? ''}>
                 {genre.name}
@@ -86,7 +90,7 @@ export default function MovieGenres({ selectedGenres, onGenreToggle }) {
         </>
       ) : (
         <div className="flex flex-col gap-2">
-          <ul className="flex gap-3 overflow-x-auto whitespace-nowrap pb-2">
+          <ul className="flex flex-wrap gap-3 pb-2 items-center overflow-x-auto sm:overflow-visible whitespace-nowrap sm:whitespace-normal">
             {genres.map((genre) => (
               <li
                 key={genre.id}
@@ -100,13 +104,19 @@ export default function MovieGenres({ selectedGenres, onGenreToggle }) {
                 {genre.name}
               </li>
             ))}
-        </ul>
-        <button
-          onClick={clearFilters}
-          className="self-start text-sm text-red-500 underline"
-        >
-          Clear Filters
-        </button>
+
+            {selectedGenres.length > 0 && (
+              <li>
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1 px-4 py-2 rounded-full text-sm border border-gray-400 text-gray-600 hover:bg-gray-200 transition"
+                >
+                  <X size={16} />
+                  Clear
+                </button>
+              </li>
+            )}
+          </ul>
         </div>
       )}
     </div>
