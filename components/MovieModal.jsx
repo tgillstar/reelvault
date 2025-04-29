@@ -13,6 +13,7 @@ export default function MovieModal({ movie, onClose }) {
         <div className="relative h-[60vh] w-full">
           {(movie.backdrop_path || movie.poster_path) ? (
               <Image
+                rel="preload"
                 src={`${imageBaseUrl}${movie.backdrop_path || movie.poster_path}`}
                 alt={movie.title}
                 fill
@@ -38,7 +39,7 @@ export default function MovieModal({ movie, onClose }) {
           </div>
 
           {/* Black overlay to darken background */}
-          <div className="absolute inset-0 bg-black bg-opacity-30"></div>
+          <div className="absolute inset-0 bg-black opacity-30"></div>
         </div>
 
         {/* Movie Details Section */}

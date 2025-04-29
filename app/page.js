@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchPopularMovies } from '@/lib/tmdb';
-import { MovieCard, MovieModal } from '@/components';
+import { HeroBanner, MovieCard, MovieModal } from '@/components';
 
 export default function Home() {
+  const [featuredMovie, setFeaturedMovie] = useState(null);
   const [movies, setMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,8 +89,27 @@ export default function Home() {
     };
   }, [loading]);
 
+  /** 
+   * Function to set the featuredMovie in the hero banner.
+   * Only pick a movie to be featured after movies have been fetched and set it only once.
+  **/
+  useEffect(() => {
+    if (movies.length > 0 && !featuredMovie) {
+      const randomIndex = Math.floor(Math.random() * movies.length);
+      setFeaturedMovie(movies[randomIndex]);
+    }
+  }, [movies, featuredMovie]);
+  
+
   return (
     <main className="w-full flex flex-col items-center gap-6 bg-gray-900 min-h-screen">
+
+      {/* Hero Banner */}
+      <div className="w-full mb-8">
+        {featuredMovie && (
+          <HeroBanner movie={featuredMovie} />
+        )}
+      </div>
 
       {error && (
         <div className="text-red-500 text-center">
@@ -97,6 +117,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Movie Grid */}
       <div className="w-full px-6">
         <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7">
           {movies.map((movie) => (

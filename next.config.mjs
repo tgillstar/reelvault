@@ -8,6 +8,7 @@ const nextConfig = {
           pathname: '/t/p/**',
         },
       ],
+      minimumCacheTTL: 60, // cache images for at least 60 seconds
     },
   };
 
