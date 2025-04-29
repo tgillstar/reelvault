@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchPopularMovies } from '@/lib/tmdb';
 import { HeroBanner, MovieCard, MovieModal, MovieGenres } from '@/components';
