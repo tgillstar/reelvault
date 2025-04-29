@@ -38,7 +38,7 @@ export default function MovieModal({ movie, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black opacity-90 flex items-center justify-center z-50 overflow-y-auto p-6">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 bg-black opacity-90 flex items-center justify-center z-50 overflow-y-auto p-6">
       <div className="relative bg-gray-600 rounded-lg w-full max-w-6xl overflow-hidden">
 
         {/* Top Section */}
