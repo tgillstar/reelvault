@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from "next/image";
+import LogoutButton from './LogoutButton';
 
 const imageBaseUrl = "https://image.tmdb.org/t/p/original";
 
@@ -12,6 +13,8 @@ export default function HeroBanner({ movie }) {
 
   return (
     <div className="relative w-full aspect-[16/9] h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[65vh] xl:h-[70vh] overflow-hidden">
+      <LogoutButton />
+      
       <Image
         rel="preload" 
         src={`${imageBaseUrl}${movie.backdrop_path || movie.poster_path}`}
