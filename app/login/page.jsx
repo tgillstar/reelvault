@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { signInWithEmailAndPassword, signInAnonymously } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { setDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,13 +14,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loadingGuest, setLoadingGuest] = useState(false);
 
-  // Redirect if already authenticated
   useEffect(() => {
-    if (user && role) {
+    if (!loading && user && role) {
+      //console.log('Redirecting authenticated user with role:', role);
       router.push('/');
     }
-  }, [user, role, router]);
+  }, [user, role, loading, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,10 +32,8 @@ export default function LoginPage() {
       const tokenResult = await userCred.user.getIdTokenResult();
       const claims = tokenResult.claims;
 
-      console.log('✅ Login successful:', claims);
-
+      //console.log('Admin Login successful:', claims);
       router.push('/');
-
     } catch (err) {
       console.error(err);
       setError('Invalid credentials.');
@@ -42,15 +42,36 @@ export default function LoginPage() {
 
   const handleGuestLogin = async () => {
     setError('');
+    setLoadingGuest(true);
+  
     try {
+      //console.log("▶ Signing in anonymously...");
       const userCred = await signInAnonymously(auth);
-      console.log('Guest login successful:', userCred.user.uid);
+      const uid = userCred.user.uid;
+      //console.log("Guest login successful:", uid);
+  
+      // Create or update guest session in `users` collection
+      try {
+        //console.log("Attempting to write guest doc...");
+        await setDoc(doc(db, 'users', uid), {
+          isGuest: true,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp()
+        }, { merge: true });
+        //console.log("Guest doc successfully written.");
+      } catch (err) {
+        console.error("Failed to write guest doc:", err);
+      }
+      
+      // Navigate immediately (no need to wait on claims)
       router.push('/');
     } catch (err) {
-      console.error('Guest login failed:', err);
-      setError('Failed to log in as guest.');
+      console.error("Guest login failed:", err);
+      setError("Guest login failed. Try again.");
+    } finally {
+      setLoadingGuest(false);
     }
-  };
+  };  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
@@ -84,9 +105,10 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleGuestLogin}
-          className="w-full text-sm text-gray-600 underline hover:text-black"
+          className="w-full text-sm text-gray-600 underline hover:text-black mt-2"
+          disabled={loadingGuest}
         >
-          Continue as Guest
+          {loadingGuest ? 'Logging in as Guest...' : 'Continue as Guest'}
         </button>
       </form>
     </div>

@@ -13,8 +13,9 @@ A Netflix-style movie discovery app built with **Next.js**, **TailwindCSS**, **F
 - ✅ Beautiful card layout with posters, hover effects, and details
 - ✅ Modal trailer preview (or fallback image if no trailer available)
 - ✅ Firebase **Authentication** with:
-  - Guest login (with automatic 30-minute timeout)
+  - Guest login (anonymous, with automatic 30-minute timeout via Firestore rules)
   - Admin-only account login (custom claim-based access)
+- ✅ Firestore writes guest user document immediately after login (no client wait)
 - ✅ Route protection via **role-based access control**
 - ✅ Optimized image loading with `next/image`
 - ✅ Graceful error handling (e.g., “Failed to load movies”)
@@ -75,10 +76,14 @@ Visit the app at `http://localhost:3000`
 
 ## 🔐 Authentication Behavior
 
-- 🧑‍💼 **Admin Users**: You create their accounts manually in Firebase Console, then use a Node.js script to assign them an `"admin"` custom claim.
-- 👤 **Guest Users**: Can sign in anonymously and access the app for 30 minutes. After that, access is revoked automatically.
+- 🧑‍💼 **Admin Users**: Create manually in Firebase Console → use `scripts/setCustomClaim.js` to assign `"admin"` role via custom claims.
+  - Note: You also need to **manually create a Firestore user document** for each admin to avoid app errors.
+- 👤 **Guest Users**:
+  - Sign in anonymously.
+  - Firestore document is created with `isGuest: true` and `createdAt` timestamp.
+  - Automatically signed out after 30 minutes (enforced via Firestore rules and app logic).
 - 🔒 Protected Routes:
-  - `/` — requires `admin` or `guest` login
+  - `/` — requires authenticated `admin` or `guest`
   - `/unauthorized` — shown if access is denied
 
 ---
@@ -95,19 +100,20 @@ _(Add screenshots later for visual appeal — homepage, modal, genre filter, log
 - ✅ Secure `.env.local` setup with TMDB and Firebase
 - ✅ Dynamic infinite scrolling movie list
 - ✅ Firebase authentication integration
+- ✅ Guest session document creation and expiration enforcement
 - ✅ Admin and guest role detection
 - ✅ Genre filtering (multi-select and mobile dropdown)
-- ✅ Login page with email/password and guest login option
+- ✅ Login page with email/password and guest login logic
 - ✅ Auth state persistence + route protection
 - ✅ Modal preview with trailer or fallback image
 - ✅ Deduplication logic + smooth UX handling
+- ✅ Guest session expiration (auto sign-out after 30 minutes)
 
 ---
 
 ## ✨ Future Enhancements
 
-- ✅ Guest session expiration (auto sign-out after 30 minutes)
-- 🚧 Save favorites/watchlist per user (via Firestore)
+- ✅ Save favorites/watchlist per user (admin-only)
 - 🚧 Search for movies by title
 - 🚧 Improve accessibility (ARIA roles, keyboard nav)
 - 🚧 Responsive navigation header with profile dropdown

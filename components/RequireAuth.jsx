@@ -9,7 +9,6 @@ export default function RequireAuth({ children, allow = ['admin', 'guest'] }) {
   const router = useRouter();
 
   useEffect(() => {
-    
     if (!loading) {
       if (!user) router.push('/login');
       else if (!allow.includes(role)) router.push('/unauthorized');

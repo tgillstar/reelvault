@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "ReelValut",
+  title: "ReelVault",
   description: "A movie discovery and favorites app built with Next.js",
 };
 
