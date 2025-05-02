@@ -15,52 +15,90 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('[Auth] Auth state changed:', firebaseUser);
+  
       if (!firebaseUser) {
+        console.log('[Auth] No user logged in');
         setUser(null);
         setRole(null);
         setLoading(false);
         return;
       }
-
+  
       const docRef = doc(db, 'users', firebaseUser.uid);
-      const snapshot = await getDoc(docRef);
-
+      let snapshot;
+  
+      try {
+        snapshot = await getDoc(docRef);
+      } catch (err) {
+        console.error('[Auth] 🔥 Error getting user doc:', err);
+        setUser(null);
+        setRole(null);
+        setLoading(false);
+        return;
+      }
+  
       if (!snapshot.exists()) {
+        console.warn('[Auth] ❗ User doc does not exist. Signing out.');
         await signOut(auth);
         setUser(null);
         setRole(null);
         setLoading(false);
         return;
       }
-
+  
       const data = snapshot.data();
+      console.log('[Auth] ✅ User doc data:', data);
+  
       const isGuest = data?.isGuest === true;
       const createdAt = data.createdAt;
-
-      // Guest expiration logic
-      if (isGuest && createdAt && typeof createdAt.toMillis === 'function') {
-        const expiresAt = createdAt.toMillis() + 30 * 60 * 1000; // 30 minutes
-        if (Date.now() > expiresAt) {
+  
+      if (isGuest) {
+        if (!createdAt || typeof createdAt.toMillis !== 'function') {
+          console.warn('[Auth] Guest login missing or invalid createdAt.');
           await signOut(auth);
           setUser(null);
           setRole(null);
           setLoading(false);
           return;
         }
+  
+        const expiresAt = createdAt.toMillis() + 30 * 60 * 1000;
+        console.log('[Auth] Guest session expires at:', new Date(expiresAt).toLocaleTimeString());
+  
+        if (Date.now() > expiresAt) {
+          console.warn('[Auth] Guest session expired.');
+          await signOut(auth);
+          setUser(null);
+          setRole(null);
+          setLoading(false);
+          return;
+        }
+  
+        console.log('[Auth] 👤 Authenticated as guest');
         setUser(firebaseUser);
         setRole('guest');
         setLoading(false);
         return;
       }
-
-      // Admin/default user
+  
+      console.log('[Auth] 👤 Authenticated as admin');
       setUser(firebaseUser);
       setRole('admin');
       setLoading(false);
     });
-
+  
     return () => unsub();
   }, []);
+  
+  // ✅ Display loader during auth check
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <span className="animate-pulse text-lg">Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, role, loading }}>

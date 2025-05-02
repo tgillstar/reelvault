@@ -18,7 +18,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user && role) {
-      //console.log('Redirecting authenticated user with role:', role);
+      console.log('Redirecting authenticated user with role:', role);
       router.push('/');
     }
   }, [user, role, loading, router]);
@@ -31,8 +31,7 @@ export default function LoginPage() {
       const userCred = await signInWithEmailAndPassword(auth, email, password);
       const tokenResult = await userCred.user.getIdTokenResult();
       const claims = tokenResult.claims;
-
-      //console.log('Admin Login successful:', claims);
+      console.log('Admin Login successful:', claims);
       router.push('/');
     } catch (err) {
       console.error(err);
@@ -45,10 +44,10 @@ export default function LoginPage() {
     setLoadingGuest(true);
   
     try {
-      //console.log("▶ Signing in anonymously...");
+      console.log("▶ Signing in anonymously...");
       const userCred = await signInAnonymously(auth);
       const uid = userCred.user.uid;
-      //console.log("Guest login successful:", uid);
+      console.log("Guest login successful:", uid);
   
       // Create or update guest session in `users` collection
       try {

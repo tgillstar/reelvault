@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import FavoriteButton from './FavoriteButton';
 
 export default function MovieCard({ movie, handleClick }) {
   const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
@@ -25,6 +26,8 @@ export default function MovieCard({ movie, handleClick }) {
           className="object-cover rounded-t-lg"
         />
       </div>
+
+      <FavoriteButton movie={movie} />
 
       {/* Hover Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 flex flex-col justify-center items-center text-white transition-opacity duration-300">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useState } from "react";
 import Image from "next/image";
+import FavoriteButton from './FavoriteButton';
 
 export default function MovieModal({ movie, onClose }) {
   const [trailerKey, setTrailerKey] = useState(null);
@@ -105,6 +106,8 @@ export default function MovieModal({ movie, onClose }) {
             <div className="absolute inset-0 bg-black/10"></div>
           )}
         </div>
+
+        <FavoriteButton movie={movie} />
 
         {/* Movie Details Section */}
         {!trailerKey && !isLoading && (
