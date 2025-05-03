@@ -1,12 +1,17 @@
-// app/HomeContent.js
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchPopularMovies } from '../lib/tmdb';
-import { HeroBanner, MovieCard, MovieModal, MovieGenres } from '../components';
+import { HeroBanner, Sidebar, MovieCard, MovieModal, ProfileModal } from '../components';
+import { useAuth } from '@/contexts/AuthContext';
+import { useFavorites } from '@/contexts/FavoriteContext';
 
 export default function HomeContent() {
   const [featuredMovie, setFeaturedMovie] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const { user } = useAuth();
+  const { favorites } = useFavorites();
+  const [showingFavoritesOnly, setShowingFavoritesOnly] = useState(false);
   const [movies, setMovies] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -91,26 +96,24 @@ export default function HomeContent() {
    * If the sentinel is in view and not currently fetching multiple pages then load 
    * the next page of movies.
 **/
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loading) {
-          loadMovies();
-        }
-      },
-      { threshold: 1 }
-    );
+useEffect(() => {
+  if (showingFavoritesOnly) return;
 
-    if (loader.current) {
-      observer.observe(loader.current);
-    }
-
-    return () => {
-      if (loader.current) {
-        observer.unobserve(loader.current);
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && !loading) {
+        loadMovies();
       }
-    };
-  }, [loading]);
+    },
+    { threshold: 1 }
+  );
+
+  if (loader.current) observer.observe(loader.current);
+
+  return () => {
+    if (loader.current) observer.unobserve(loader.current);
+  };
+}, [loading, showingFavoritesOnly]); 
 
   /** 
    * Function to set the featuredMovie in the hero banner.
@@ -123,43 +126,91 @@ export default function HomeContent() {
     }
   }, [movies, featuredMovie]);
 
-  return (
-    <main className="w-full flex flex-col items-center gap-6 bg-gray-900 min-h-screen">
+  const onShowFavorites = async () => {
+    if (!user || favorites.size === 0) return;
+  
+    setLoading(true);
+    setShowingFavoritesOnly(true); // 🔒 Disable genre filters and infinite scroll
+  
+    try {
+      const favIds = Array.from(favorites);
+      const favMovies = [];
+  
+      for (const id of favIds) {
+        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
+        const movie = await res.json();
+        if (movie && movie.id) favMovies.push(movie);
+      }
+  
+      setMovies(favMovies);
+    } catch (err) {
+      console.error('[HomeContent] ❌ Failed to load favorite movies:', err);
+      setError("Failed to load your favorites.");
+    } finally {
+      setLoading(false);
+    }
+  };
+    
 
-      {/* Hero Banner */}
-      <div className="w-full mb-8">
-        {featuredMovie && (
-          <HeroBanner movie={featuredMovie} />
+  return (
+    <main className="w-full flex flex-col sm:flex-row bg-gray-900 min-h-screen">
+  
+      {/* Sidebar navigation */}
+      <Sidebar
+        selectedGenres={selectedGenres}
+        onGenreToggle={setSelectedGenres}
+        onShowFavorites={onShowFavorites}
+        onShowAll={() => {
+          setSelectedGenres([]);         // Restore default genre
+          setMovies([]);                 // Clear current movie grid
+          setCurrentPage(1);             // Restart pagination
+          setTotalPages(null);
+          setShowingFavoritesOnly(false);
+        }}
+        onShowProfile={() => setShowProfile(true)}
+      />
+  
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col items-center gap-6">
+  
+        {/* Hero Banner */}
+        <div className="w-full mb-8">
+          {featuredMovie && <HeroBanner movie={featuredMovie} />}
+        </div>
+  
+        {error && (
+          <div className="text-red-500 text-center">
+            {error}
+          </div>
+        )}
+  
+        {/* Movie Grid */}
+        <div className="w-full px-6">
+          <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7">
+            {movies.map((movie) => (
+              <MovieCard key={movie.id} movie={movie} handleClick={setSelectedMovie} />
+            ))}
+          </div>
+        </div>
+  
+        {/* Sentinel div that triggers infinite scroll */}
+        <div ref={loader} className="h-10" />
+  
+        {loading && <p className="text-white">Loading more movies...</p>}
+  
+        {selectedMovie && (
+          <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+        )}
+  
+        {/* Profile Modal */}
+        {showProfile && (
+          <ProfileModal
+            user={user}
+            userDoc={userDoc}
+            onClose={() => setShowProfile(false)}
+          />
         )}
       </div>
-
-      {error && (
-        <div className="text-red-500 text-center">
-          {error}
-        </div>
-      )}
-
-      {/* Movie Genre(s) selection */}
-      <MovieGenres selectedGenres={selectedGenres} onGenreToggle={setSelectedGenres} />
-
-      {/* Movie Grid */}
-      <div className="w-full px-6">
-      <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7">
-          {movies.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} handleClick={setSelectedMovie} />
-          ))}
-        </div>
-      </div>
-
-       {/* Sentinel div that triggers infinite scroll */}
-      <div ref={loader} className="h-10" />
-
-      {loading && <p className="text-white">Loading more movies...</p>}
-
-      {selectedMovie && (
-        <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
-      )}
-
     </main>
-  );
+  );  
 }

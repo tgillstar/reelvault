@@ -72,10 +72,26 @@ export function FavoriteProvider({ children }) {
   };
 
   return (
-    <FavoriteContext.Provider value={{ favorites, addFavorite, removeFavorite, loadingFavorites }}>
+    <FavoriteContext.Provider
+      value={{
+        favorites,
+        addFavorite,
+        removeFavorite,
+        loadingFavorites,
+        favoritesArray: Array.from(favorites),
+        favoritesCount: favorites.size || 0,
+      }}
+    >
       {children}
     </FavoriteContext.Provider>
   );
 }
 
-export const useFavorites = () => useContext(FavoriteContext);
+// Safe custom hook with error guard
+export const useFavorites = () => {
+  const context = useContext(FavoriteContext);
+  if (!context) {
+    throw new Error('useFavorites must be used within a FavoriteProvider');
+  }
+  return context;
+};
