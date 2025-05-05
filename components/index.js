@@ -8,3 +8,4 @@ export { default as RequireAuth } from './RequireAuth';
 export { default as RequireAdmin } from './RequireAdmin';
 export { default as FavoriteButton } from './FavoriteButton';
 export { default as ProfileModal } from './ProfileModal';
+export { default as KeywordSearch } from './KeywordSearch';

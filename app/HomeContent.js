@@ -15,6 +15,7 @@ export default function HomeContent() {
   const [userDoc, setUserDoc] = useState(null);
   const { favorites } = useFavorites();
   const [showingFavoritesOnly, setShowingFavoritesOnly] = useState(false);
+  const [selectedKeyword, setSelectedKeyword] = useState(null);
   const [movies, setMovies] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -46,13 +47,18 @@ export default function HomeContent() {
         ? `&with_genres=${selectedGenres.join(',')}`
         : '';
 
+      const keywordQuery = selectedKeyword
+        ? `&with_keywords=${selectedKeyword.id}`
+        : '';
+
       const url = `https://api.themoviedb.org/3/${
-        selectedGenres.length > 0 ? 'discover/movie' : 'movie/popular'
-      }?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}${genreQuery}`;
+        selectedGenres.length > 0 
+        ? 'discover/movie' 
+        : 'movie/popular'
+      }?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}${genreQuery}${keywordQuery}`;
 
       const res = await fetch(url);
       const data = await res.json();
-
   
       // Filter movies with a valid image
       const filteredMovies = data.results.filter(
@@ -78,7 +84,7 @@ export default function HomeContent() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, selectedGenres, selectedKeyword]);
   
   // Use these effects to trigger movie loading and movie genre selection.
   useEffect(() => {
@@ -90,6 +96,12 @@ export default function HomeContent() {
     setCurrentPage(1);
     setTotalPages(null);
   }, [selectedGenres]);
+
+  useEffect(() => {
+    setMovies([]);
+    setCurrentPage(1);
+    setTotalPages(null);
+  }, [selectedGenres, selectedKeyword]);  
   
   useEffect(() => {
     const fetchUserDoc = async () => {
@@ -193,6 +205,7 @@ useEffect(() => {
           setShowingFavoritesOnly(false);
         }}
         onShowProfile={() => setShowProfile(true)}
+        onKeywordSelect={setSelectedKeyword}
       />
   
       {/* Main Content Area */}

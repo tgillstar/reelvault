@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import MovieGenres from './MovieGenres';
+import KeywordSearch from './KeywordSearch';
 import { useFavorites } from '@/contexts/FavoriteContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Menu, X } from 'lucide-react'; 
 
-export default function Sidebar({ selectedGenres, onGenreToggle, onShowFavorites, onShowAll, onShowProfile }) {
+export default function Sidebar({ selectedGenres, onGenreToggle, onShowFavorites, onShowAll, onShowProfile, onKeywordSelect }) {
   const { favoritesCount } = useFavorites();
   const [isOpen, setIsOpen] = useState(false);
   const { userDoc } = useAuth();
@@ -25,7 +26,7 @@ export default function Sidebar({ selectedGenres, onGenreToggle, onShowFavorites
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white transform transition-transform duration-300 z-40 ${
+        className={`fixed top-0 left-0 h-full w-80 bg-gray-800 text-white transform transition-transform duration-300 z-40 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -55,9 +56,9 @@ export default function Sidebar({ selectedGenres, onGenreToggle, onShowFavorites
                 All Movies
               </button>
             </nav>
-
             {/* Genre Grid */}
             <MovieGenres selectedGenres={selectedGenres} onGenreToggle={onGenreToggle} />
+            <KeywordSearch onKeywordSelect={onKeywordSelect} />
           </div>
         </div>
       </aside>
