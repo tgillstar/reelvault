@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firestore';
 import { fetchPopularMovies } from '../lib/tmdb';
 import { HeroBanner, Sidebar, MovieCard, MovieModal, ProfileModal } from '../components';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +12,7 @@ export default function HomeContent() {
   const [featuredMovie, setFeaturedMovie] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const { user } = useAuth();
+  const [userDoc, setUserDoc] = useState(null);
   const { favorites } = useFavorites();
   const [showingFavoritesOnly, setShowingFavoritesOnly] = useState(false);
   const [movies, setMovies] = useState([]);
@@ -88,6 +91,28 @@ export default function HomeContent() {
     setTotalPages(null);
   }, [selectedGenres]);
   
+  useEffect(() => {
+    const fetchUserDoc = async () => {
+      if (!user) return;
+  
+      try {
+        const ref = doc(db, 'users', user.uid);
+        const snap = await getDoc(ref);
+  
+        if (snap.exists()) {
+          setUserDoc(snap.data());
+        } else {
+          console.warn('[HomeContent] No user document found');
+          setUserDoc(null);
+        }
+      } catch (err) {
+        console.error('[HomeContent] Failed to fetch userDoc:', err);
+        setUserDoc(null);
+      }
+    };
+  
+    fetchUserDoc();
+  }, [user]);  
 
   /** 
    * Using IntersectionObserver to trigger page increments for the 
