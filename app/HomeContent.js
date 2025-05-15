@@ -1,261 +1,223 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firestore';
-import { fetchPopularMovies } from '../lib/tmdb';
-import { HeroBanner, Sidebar, MovieCard, MovieModal, ProfileModal } from '../components';
+import {
+  HeroBanner,
+  Sidebar,
+  MovieCard,
+  MovieModal,
+  ProfileModal
+} from '@/components';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFavorites } from '@/contexts/FavoriteContext';
 
 export default function HomeContent() {
-  const [featuredMovie, setFeaturedMovie] = useState(null);
-  const [showProfile, setShowProfile] = useState(false);
   const { user } = useAuth();
-  const [userDoc, setUserDoc] = useState(null);
   const { favorites } = useFavorites();
+
+  const [userDoc, setUserDoc] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
   const [showingFavoritesOnly, setShowingFavoritesOnly] = useState(false);
+
+  const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedKeyword, setSelectedKeyword] = useState(null);
-  
-  // add this for debug:
-  useEffect(() => {
-    console.log('[HomeContent] 🔑 selectedKeyword changed →', selectedKeyword);
-  }, [selectedKeyword]);
 
   const [movies, setMovies] = useState([]);
-  const [selectedGenres, setSelectedGenres] = useState([]);
+  const [featuredMovie, setFeaturedMovie] = useState(null);
   const [selectedMovie, setSelectedMovie] = useState(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(null);
+
   const [loading, setLoading] = useState(false);
-  const loader = useRef(null);
   const [error, setError] = useState(null);
 
-  /**
-   * Sets up the function to fetch movies dynamically.
-   * First try to call TMDB API with the current page number then
-   * appends new movies to existing list (doesn’t overwrite!).
-   * It also shows "loading" state when fetching.
-   */
-  const loadMovies = useCallback(async () => {
-    if (totalPages && currentPage > totalPages) {
-      console.log("All pages loaded, stopping fetch.");
-      setLoading(false);
-      return;
-    }
+  const loader = useRef(null);
 
-         setLoading(true);
-
-      // Build Filter movies by select genre
-      const genreQuery = selectedGenres.length > 0
-        ? `&with_genres=${selectedGenres.join(',')}`
-        : '';
-
-      const keywordQuery = selectedKeyword
-        ? `&with_keywords=${selectedKeyword.id}`
-        : '';
-
-      // Construct the full URL
-      /*
-      const url = `https://api.themoviedb.org/3/${
-        selectedGenres.length > 0 
-        ? 'discover/movie' 
-        : 'movie/popular'
-      }?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}${genreQuery}${keywordQuery}`;
-      */
-
-      const url = `https://api.themoviedb.org/3/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}` +
-                genreQuery +
-                keywordQuery;
-      console.log('[loadMovies] fetching:', url);
-  
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-  
-      // Filter movies with a valid image
-      const filteredMovies = data.results.filter(
-        (movie) => movie.backdrop_path || movie.poster_path
-      );
-  
-      // Deduplicate while merging previous movies + new filtered movies
-      setMovies((prev) => {
-        const movieMap = new Map();
-        
-        [...prev, ...filteredMovies].forEach((movie) => {
-          movieMap.set(movie.id, movie); // overwrite duplicates based on ID
-        });
-  
-        return Array.from(movieMap.values());
-      });
-  
-      setTotalPages(data.total_pages);
-      setCurrentPage((prev) => prev + 1);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load movies. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, totalPages, selectedGenres, selectedKeyword]);
-  
-  // Whenever loadMovies changes (page, filters, keyword), fetch
+  // Fetch the user's Firestore doc (to know guest vs admin)
   useEffect(() => {
-    loadMovies();
-  }, [loadMovies]);  
-
-  useEffect(() => {
-    setMovies([]);
-    setCurrentPage(1);
-    setTotalPages(null);
-  }, [selectedGenres]);
-
-  // Reset pagination whenever filters change
-  useEffect(() => {
-    setMovies([]);
-    setCurrentPage(1);
-    setTotalPages(null);
-  }, [ selectedGenres, selectedKeyword]);  
-  
-  useEffect(() => {
-    const fetchUserDoc = async () => {
-      if (!user) return;
-  
+    if (!user) return;
+    (async () => {
       try {
-        const ref = doc(db, 'users', user.uid);
-        const snap = await getDoc(ref);
-  
-        if (snap.exists()) {
-          setUserDoc(snap.data());
-        } else {
-          console.warn('[HomeContent] No user document found');
-          setUserDoc(null);
-        }
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        setUserDoc(snap.exists() ? snap.data() : null);
       } catch (err) {
         console.error('[HomeContent] Failed to fetch userDoc:', err);
         setUserDoc(null);
       }
-    };
-  
-    fetchUserDoc();
-  }, [user]);  
+    })();
+  }, [user]);
 
-  /** 
-   * Using IntersectionObserver to trigger page increments for the 
-   * infinite scrolling of movies.
-   * Watch thr "sentinel" element at bottom of page.
-   * If the sentinel is in view and not currently fetching multiple pages then load 
-   * the next page of movies.
-**/
-useEffect(() => {
-  if (showingFavoritesOnly) return;
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && !loading) {
-        loadMovies();
-      }
-    },
-    { threshold: 1 }
-  );
-
-  if (loader.current) observer.observe(loader.current);
-
-  return () => {
-    if (loader.current) observer.unobserve(loader.current);
-  };
-}, [loading, showingFavoritesOnly]); 
-
-  /** 
-   * Function to set the featuredMovie in the hero banner.
-   * Only pick a movie to be featured after movies have been fetched and set it only once.
-  **/
-  useEffect(() => {
-    if (movies.length > 0 && !featuredMovie) {
-      const randomIndex = Math.floor(Math.random() * movies.length);
-      setFeaturedMovie(movies[randomIndex]);
-    }
-  }, [movies, featuredMovie]);
-
-  const onShowFavorites = async () => {
-    if (!user || favorites.size === 0) return;
-  
+  // Core fetch function for any page + filters
+  const fetchPage = async (pageNum) => {
     setLoading(true);
-    setShowingFavoritesOnly(true); // 🔒 Disable genre filters and infinite scroll
-  
     try {
-      const favIds = Array.from(favorites);
-      const favMovies = [];
-  
-      for (const id of favIds) {
-        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`);
-        const movie = await res.json();
-        if (movie && movie.id) favMovies.push(movie);
+      const genreQuery = selectedGenres.length
+        ? `&with_genres=${selectedGenres.join(',')}`
+        : '';
+      const keywordQuery = selectedKeyword
+        ? `&with_keywords=${selectedKeyword.id}`
+        : '';
+
+      const url = `https://api.themoviedb.org/3/discover/movie` +
+        `?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}` +
+        `&page=${pageNum}${genreQuery}${keywordQuery}`;
+
+      console.log('[fetchPage] fetching:', url);
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const valid = data.results.filter(
+        (m) => m.backdrop_path || m.poster_path
+      );
+
+      setTotalPages(data.total_pages);
+
+      if (pageNum === 1) {
+        setMovies(valid);
+        // pick a hero if none yet
+        if (valid.length && !featuredMovie) {
+          setFeaturedMovie(valid[Math.floor(Math.random() * valid.length)]);
+        }
+      } else {
+        // Deduplicate while merging previous movies + new filtered movies
+        setMovies((prev) => {
+          const map = new Map();
+          [...prev, ...valid].forEach((m) => map.set(m.id, m));
+          return Array.from(map.values());
+        });
       }
-  
-      setMovies(favMovies);
     } catch (err) {
-      console.error('[HomeContent] ❌ Failed to load favorite movies:', err);
-      setError("Failed to load your favorites.");
+      console.error('[fetchPage] error:', err);
+      setError('Failed to load movies.');
     } finally {
       setLoading(false);
     }
   };
-    
+
+  // When genres or keyword change (and NOT favorites-only), reset & load page 1
+  useEffect(() => {
+    if (showingFavoritesOnly) return;
+    setMovies([]);
+    setCurrentPage(1);
+    setTotalPages(null);
+    fetchPage(1);
+  }, [selectedGenres, selectedKeyword, showingFavoritesOnly]);
+
+  // When currentPage bumps (and NOT favorites-only), load that page
+  useEffect(() => {
+    if (showingFavoritesOnly) return;
+    if (currentPage === 1) return;           // already loaded by filter effect
+    if (totalPages && currentPage > totalPages) return;
+    fetchPage(currentPage);
+  }, [currentPage, showingFavoritesOnly, totalPages]);
+
+  /** 
+   * Using IntersectionObserver to trigger page increments for the 
+   * infinite scrolling of movies.
+   * Nudge page++ when sentinel comes into view.
+  **/
+  useEffect(() => {
+    if (showingFavoritesOnly) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading) {
+          if (!totalPages || currentPage < totalPages) {
+            setCurrentPage((p) => p + 1);
+          }
+        }
+      },
+      { threshold: 1 }
+    );
+    if (loader.current) obs.observe(loader.current);
+    return () => {
+      if (loader.current) obs.unobserve(loader.current);
+    };
+  }, [loading, showingFavoritesOnly, totalPages, currentPage]);
+
+  // Favorites-only view
+  const onShowFavorites = async () => {
+    if (!user || !favorites.size) return;
+    setShowingFavoritesOnly(true);
+    setLoading(true);
+    try {
+      const favIds = Array.from(favorites);
+      const favMovies = [];
+      for (let id of favIds) {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/movie/${id}` +
+          `?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}`
+        );
+        const m = await res.json();
+        if (m.id) favMovies.push(m);
+      }
+      setMovies(favMovies);
+    } catch (err) {
+      console.error('[HomeContent] Failed to load favorites:', err);
+      setError('Failed to load favorites.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // “All Movies” resets filters & keyword & leaves infinite scroll on
+  const onShowAll = () => {
+    setSelectedGenres([]);
+    setMovies([]);
+    setCurrentPage(1);
+    setTotalPages(null);
+    setShowingFavoritesOnly(false);
+    setSelectedKeyword(null);
+  };
 
   return (
     <main className="w-full flex flex-col sm:flex-row bg-gray-900 min-h-screen">
-  
+
       {/* Sidebar navigation */}
       <Sidebar
         selectedGenres={selectedGenres}
         onGenreToggle={setSelectedGenres}
         onShowFavorites={onShowFavorites}
-        onShowAll={() => {
-          setSelectedGenres([]);         // Restore default genre
-          setSelectedKeyword(null);      // Reset keyword search
-          setMovies([]);                 // Clear current movie grid
-          setCurrentPage(1);             // Restart pagination
-          setTotalPages(null);
-          setShowingFavoritesOnly(false);
-        }}
+        onShowAll={onShowAll}
         onShowProfile={() => setShowProfile(true)}
         onKeywordSelect={setSelectedKeyword}
       />
-  
-      {/* Main Content Area */}
+
       <div className="flex-1 flex flex-col items-center gap-6">
-  
-        {/* Hero Banner */}
-        <div className="w-full mb-8">
-          {featuredMovie && <HeroBanner movie={featuredMovie} />}
-        </div>
-  
-        {error && (
-          <div className="text-red-500 text-center">
-            {error}
+        {featuredMovie && (
+          <div className="w-full mb-8">
+            <HeroBanner movie={featuredMovie} />
           </div>
         )}
-  
-        {/* Movie Grid */}
+
+        {error && (
+          <div className="text-red-500 text-center">{error}</div>
+        )}
+
         <div className="w-full px-6">
-          <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7">
-            {movies.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} handleClick={setSelectedMovie} />
+          <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-7">
+            {movies.map((m) => (
+              <MovieCard
+                key={m.id}
+                movie={m}
+                handleClick={setSelectedMovie}
+              />
             ))}
           </div>
         </div>
-  
-        {/* Sentinel div that triggers infinite scroll */}
+
         <div ref={loader} className="h-10" />
-  
         {loading && <p className="text-white">Loading more movies...</p>}
-  
+
         {selectedMovie && (
-          <MovieModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+          <MovieModal
+            movie={selectedMovie}
+            onClose={() => setSelectedMovie(null)}
+          />
         )}
-  
-        {/* Profile Modal */}
+
         {showProfile && (
           <ProfileModal
             user={user}
@@ -265,5 +227,5 @@ useEffect(() => {
         )}
       </div>
     </main>
-  );  
+  );
 }

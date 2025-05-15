@@ -11,8 +11,13 @@ export default function Sidebar({ selectedGenres, onGenreToggle, onShowFavorites
   const { favoritesCount } = useFavorites();
   const [isOpen, setIsOpen] = useState(false);
   const { userDoc } = useAuth();
-
   const isGuest = userDoc?.isGuest;
+
+  // Combined handler for the “Clear Search” button
+  const handleClearSearch = () => {
+    onShowAll();            // reset grid & genres
+    onKeywordSelect(null);  // clear the keyword filter
+  };
 
   return (
     <>
@@ -58,7 +63,10 @@ export default function Sidebar({ selectedGenres, onGenreToggle, onShowFavorites
             </nav>
             {/* Genre Grid */}
             <MovieGenres selectedGenres={selectedGenres} onGenreToggle={onGenreToggle} />
-            <KeywordSearch onKeywordSelect={onKeywordSelect} />
+            <KeywordSearch 
+              onKeywordSelect={onKeywordSelect} 
+              onClearSearch={handleClearSearch}
+            />
           </div>
         </div>
       </aside>

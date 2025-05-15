@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function KeywordSearch({ onKeywordSelect }) {
+export default function KeywordSearch({ onKeywordSelect, onClearSearch }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
 
@@ -18,6 +18,13 @@ export default function KeywordSearch({ onKeywordSelect }) {
     } catch (err) {
       console.error('[KeywordSearch]: Failed to fetch keywords:', err);
     }
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setResults([]);
+    onClearSearch();         // tell HomeContent to reset the grid
+    onKeywordSelect(null);   // clear HomeContent’s selectedKeyword
   };
 
   return (
@@ -38,6 +45,12 @@ export default function KeywordSearch({ onKeywordSelect }) {
         className="w-full bg-blue-600 px-3 py-2 rounded text-white text-sm hover:bg-blue-700 transition"
       >
         Search
+      </button>
+      <button
+        onClick={handleClear}
+        className="w-full bg-red-600 px-3 py-2 rounded text-white text-sm hover:bg-red-700 transition"
+      >
+        Clear
       </button>
 
       <ul className="mt-3 space-y-1 text-sm">
