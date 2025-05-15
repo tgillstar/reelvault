@@ -16,6 +16,12 @@ export default function HomeContent() {
   const { favorites } = useFavorites();
   const [showingFavoritesOnly, setShowingFavoritesOnly] = useState(false);
   const [selectedKeyword, setSelectedKeyword] = useState(null);
+  
+  // add this for debug:
+  useEffect(() => {
+    console.log('[HomeContent] 🔑 selectedKeyword changed →', selectedKeyword);
+  }, [selectedKeyword]);
+
   const [movies, setMovies] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -37,12 +43,10 @@ export default function HomeContent() {
       setLoading(false);
       return;
     }
-  
-    try {
 
-      setLoading(true);
+         setLoading(true);
 
-      // Filter movies by select genre
+      // Build Filter movies by select genre
       const genreQuery = selectedGenres.length > 0
         ? `&with_genres=${selectedGenres.join(',')}`
         : '';
@@ -51,12 +55,21 @@ export default function HomeContent() {
         ? `&with_keywords=${selectedKeyword.id}`
         : '';
 
+      // Construct the full URL
+      /*
       const url = `https://api.themoviedb.org/3/${
         selectedGenres.length > 0 
         ? 'discover/movie' 
         : 'movie/popular'
       }?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}${genreQuery}${keywordQuery}`;
+      */
 
+      const url = `https://api.themoviedb.org/3/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&page=${currentPage}` +
+                genreQuery +
+                keywordQuery;
+      console.log('[loadMovies] fetching:', url);
+  
+    try {
       const res = await fetch(url);
       const data = await res.json();
   
@@ -86,7 +99,7 @@ export default function HomeContent() {
     }
   }, [currentPage, totalPages, selectedGenres, selectedKeyword]);
   
-  // Use these effects to trigger movie loading and movie genre selection.
+  // Whenever loadMovies changes (page, filters, keyword), fetch
   useEffect(() => {
     loadMovies();
   }, [loadMovies]);  
@@ -97,11 +110,12 @@ export default function HomeContent() {
     setTotalPages(null);
   }, [selectedGenres]);
 
+  // Reset pagination whenever filters change
   useEffect(() => {
     setMovies([]);
     setCurrentPage(1);
     setTotalPages(null);
-  }, [selectedGenres, selectedKeyword]);  
+  }, [ selectedGenres, selectedKeyword]);  
   
   useEffect(() => {
     const fetchUserDoc = async () => {
@@ -199,6 +213,7 @@ useEffect(() => {
         onShowFavorites={onShowFavorites}
         onShowAll={() => {
           setSelectedGenres([]);         // Restore default genre
+          setSelectedKeyword(null);      // Reset keyword search
           setMovies([]);                 // Clear current movie grid
           setCurrentPage(1);             // Restart pagination
           setTotalPages(null);

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react'; 
 
 export default function KeywordSearch({ onKeywordSelect }) {
   const [query, setQuery] = useState('');
