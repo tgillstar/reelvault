@@ -6,31 +6,35 @@ A Netflix-style movie discovery app built with **Next.js**, **TailwindCSS**, **F
 
 ## 🚀 Features
 
-- ✅ Browse popular movies from TMDB
-- ✅ Filter by **one or more genres**
-- ✅ Responsive infinite scrolling movie grid
-- ✅ Featured "hero" banner with dynamic movie highlight
-- ✅ Beautiful card layout with posters, hover effects, and details
-- ✅ Modal trailer preview (or fallback image if no trailer available)
+- ✅ Browse popular movies from TMDB  
+- ✅ Filter by **one or more genres**  
+- ✅ **Keyword search** powered by TMDB’s keyword endpoint  
+- ✅ Responsive **infinite-scrolling** movie grid  
+- ✅ **Deduplication** logic to avoid showing the same movie twice  
+- ✅ Featured “hero” banner with dynamic movie highlight  
+- ✅ Beautiful card layout with posters, hover effects, and details  
+- ✅ **Save favorites/watchlist** per user (admin-only) with heart toggle and animation  
+- ✅ **Slide-out sidebar** navigation (profile, favorites count, clear filters)  
+- ✅ Modal trailer preview (or fallback image if no trailer available)  
 - ✅ Firebase **Authentication** with:
-  - Guest login (anonymous, with automatic 30-minute timeout via Firestore rules)
-  - Admin-only account login (custom claim-based access)
-- ✅ Firestore writes guest user document immediately after login (no client wait)
-- ✅ Route protection via **role-based access control**
-- ✅ Optimized image loading with `next/image`
-- ✅ Graceful error handling (e.g., “Failed to load movies”)
-- ✅ Fully responsive UI (mobile, tablet, desktop)
-- ✅ Deployed to Vercel for production hosting
+  - Guest login (anonymous, automatic 30-minute timeout via Firestore rules & app logic)  
+  - Admin-only login (custom claim–based access)  
+- ✅ Firestore writes guest user document immediately after login (no client wait)  
+- ✅ Route protection via **role-based access control**  
+- ✅ Optimized image loading with `next/image`  
+- ✅ Graceful error handling (e.g., “Failed to load movies”)  
+- ✅ Fully responsive UI (mobile, tablet, desktop) 
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Frontend:** Next.js 15 + TailwindCSS 4
-- **Auth & Backend:** Firebase Auth + Firestore Rules
-- **API:** The Movie Database (TMDB)
-- **Hosting:** Vercel
-- **Other Tools:** PostCSS, Autoprefixer, Firebase Admin SDK (for custom claims)
+- **Frontend:** Next.js 15 + TailwindCSS 4  
+- **State & Context:** React Context API (AuthContext, FavoriteContext)  
+- **Auth & Backend:** Firebase Auth + Firestore Rules (guest session expiry, custom claims)  
+- **API:** The Movie Database (TMDB)  
+- **Hosting:** Vercel  
+- **Other Tools:** PostCSS, Autoprefixer, Firebase Admin SDK (for custom claims)  
 
 ---
 
@@ -76,48 +80,43 @@ Visit the app at `http://localhost:3000`
 
 ## 🔐 Authentication Behavior
 
-- 🧑‍💼 **Admin Users**: Create manually in Firebase Console → use `scripts/setCustomClaim.js` to assign `"admin"` role via custom claims.
-  - Note: You also need to **manually create a Firestore user document** for each admin to avoid app errors.
-- 👤 **Guest Users**:
-  - Sign in anonymously.
-  - Firestore document is created with `isGuest: true` and `createdAt` timestamp.
-  - Automatically signed out after 30 minutes (enforced via Firestore rules and app logic).
-- 🔒 Protected Routes:
-  - `/` — requires authenticated `admin` or `guest`
-  - `/unauthorized` — shown if access is denied
+* 🧑‍💼 **Admin Users**
 
----
+  1. Create account in Firebase Console
+  2. Run `scripts/setCustomClaim.js` to assign `"admin"` role
+  3. **Also** manually create a matching Firestore `users/{uid}` document
+* 👤 **Guest Users**
 
-## 📸 Screenshots
+  * Anonymous login → writes `{ isGuest: true, createdAt, lastLogin }`
+  * Auto-sign-out after 30 min (enforced via Firestore rules & client)
+* 🔒 **Protected Routes**
 
-_(Add screenshots later for visual appeal — homepage, modal, genre filter, login page, etc.)_
+  * `/` — needs authenticated guest or admin
+  * `/unauthorized` — shown on access denial
 
 ---
 
 ## 🚧 Current Progress
 
-- ✅ Initial project scaffold with Next.js + TailwindCSS
-- ✅ Secure `.env.local` setup with TMDB and Firebase
-- ✅ Dynamic infinite scrolling movie list
-- ✅ Firebase authentication integration
-- ✅ Guest session document creation and expiration enforcement
-- ✅ Admin and guest role detection
-- ✅ Genre filtering (multi-select and mobile dropdown)
-- ✅ Login page with email/password and guest login logic
-- ✅ Auth state persistence + route protection
-- ✅ Modal preview with trailer or fallback image
-- ✅ Deduplication logic + smooth UX handling
-- ✅ Guest session expiration (auto sign-out after 30 minutes)
+* ✅ Basic Next.js + TailwindCSS scaffold
+* ✅ TMDB API integration (popular, discover, genres)
+* ✅ Infinite scroll + deduplication of movie list
+* ✅ Firebase Auth (guest + admin) & Firestore session docs
+* ✅ Role-based route protection & custom claims setup
+* ✅ Sidebar nav (profile modal, favorites, clear filters)
+* ✅ Keyword search integration & “All”/“Favorites” toggle
+* ✅ Favorites context + heart-toggle button with local caching
+* ✅ Error handling & loading states
 
 ---
 
 ## ✨ Future Enhancements
 
-- ✅ Save favorites/watchlist per user (admin-only)
-- 🚧 Search for movies by title
-- 🚧 Improve accessibility (ARIA roles, keyboard nav)
-- 🚧 Responsive navigation header with profile dropdown
-- 🚧 Admin dashboard for analytics or managing favorites
+* 🚧 Search for movies by title (global search)
+* 🚧 Improve accessibility (ARIA roles, keyboard navigation)
+* 🚧 Responsive top nav with profile dropdown
+* 🚧 Admin dashboard (analytics, manage favorites)
+* 🚧 Export user watchlists / shareable URLs
 
 ---
 
